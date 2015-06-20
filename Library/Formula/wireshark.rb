@@ -1,22 +1,31 @@
-require "formula"
-
 class Wireshark < Formula
-  homepage "http://www.wireshark.org"
+  desc "Graphical network analyzer and capture tool"
+  homepage "https://www.wireshark.org"
 
   stable do
-    url "http://wiresharkdownloads.riverbed.com/wireshark/src/all-versions/wireshark-1.12.1.tar.bz2"
-    mirror "http://www.wireshark.org/download/src/all-versions/wireshark-1.12.1.tar.bz2"
-    sha1 "e1508ea25ccf077c5a7fa2af3b88f3ae199f77fb"
+    url "https://www.wireshark.org/download/src/all-versions/wireshark-1.12.6.tar.bz2"
+    mirror "https://1.eu.dl.wireshark.org/src/wireshark-1.12.6.tar.bz2"
+    sha256 "22ac0cc872f12cef9bb2cacfe0720eed8533dc5cea102d21de511620606cb3b6"
 
     # Removes SDK checks that prevent the build from working on CLT-only systems
     # Reported upstream: https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=9290
     patch :DATA
+
+    depends_on "homebrew/dupes/libpcap" => :optional
   end
 
   bottle do
-    sha1 "39c6d406bc26596f50ecd8bf0c655a881ddb3dc4" => :mavericks
-    sha1 "3edff08a8c13ac4c7ff86fc449624678cc56e96d" => :mountain_lion
-    sha1 "9e7161cf85b8fb2b646bd4f6a083a9913105da64" => :lion
+    sha256 "6a0cf2653668e7c4f2838c5c7f9e3d025389b78e31afda50020b7876592a9f62" => :yosemite
+    sha256 "ca2db6e47b255c42c9426b4bb61cc9181f8eecb0d5dc0c1c7d3e08899977f735" => :mavericks
+    sha256 "1d98b70b4eef4833446659398090fde23d6647b7f11181ca488a0a38ec3bf71e" => :mountain_lion
+  end
+
+  devel do
+    url "https://www.wireshark.org/download/src/all-versions/wireshark-1.99.6.tar.bz2"
+    mirror "https://1.eu.dl.wireshark.org/src/wireshark-1.99.6.tar.bz2"
+    sha256 "dfd8800f15a531573700703fee32c97f6c1525615c5d2b92a110fd50b259cc1a"
+
+    depends_on "homebrew/dupes/libpcap" if MacOS.version == :mavericks
   end
 
   head do
@@ -30,36 +39,42 @@ class Wireshark < Formula
   option "with-gtk+3", "Build the wireshark command with gtk+3"
   option "with-gtk+", "Build the wireshark command with gtk+"
   option "with-qt", "Build the wireshark-qt command (can be used with or without either GTK option)"
-  option "with-headers", "Install Wireshark library headers for plug-in developemnt"
+  option "with-qt5", "Build the wireshark-qt command with qt5 (can be used with or without either GTK option)"
+  option "with-headers", "Install Wireshark library headers for plug-in development"
 
   depends_on "pkg-config" => :build
 
   depends_on "glib"
   depends_on "gnutls"
   depends_on "libgcrypt"
+  depends_on "d-bus"
 
   depends_on "geoip" => :recommended
+  depends_on "c-ares" => :recommended
 
-  depends_on "c-ares" => :optional
   depends_on "libsmi" => :optional
   depends_on "lua" => :optional
-  depends_on "pcre" => :optional
   depends_on "portaudio" => :optional
+  depends_on "qt5" => :optional
   depends_on "qt" => :optional
   depends_on "gtk+3" => :optional
   depends_on "gtk+" => :optional
+  depends_on "gnome-icon-theme" if build.with? "gtk+3"
 
   def install
-    args = ["--disable-dependency-tracking",
-            "--prefix=#{prefix}",
-            "--with-gnutls",
-            "--with-ssl"]
+    no_gui = build.without?("gtk+3") && build.without?("qt") && build.without?("gtk+") && build.without?("qt5")
 
-    args << "--disable-wireshark" if build.without?("gtk+3") && build.without?("qt") && build.without?("gtk+")
+    args = ["--disable-dependency-tracking",
+            "--disable-silent-rules",
+            "--prefix=#{prefix}",
+            "--with-gnutls"]
+
+    args << "--disable-wireshark" if no_gui
     args << "--disable-gtktest" if build.without?("gtk+3") && build.without?("gtk+")
-    args << "--with-qt" if build.with? "qt"
+    args << "--with-qt" if build.with?("qt") || build.with?("qt5")
     args << "--with-gtk3" if build.with? "gtk+3"
     args << "--with-gtk2" if build.with? "gtk+"
+    args << "--with-libcap=#{Formula["libpcap"].opt_prefix}" if build.with? "libpcap"
 
     if build.head?
       args << "--disable-warnings-as-errors"
@@ -69,7 +84,7 @@ class Wireshark < Formula
     system "./configure", *args
     system "make"
     ENV.deparallelize # parallel install fails
-    system "make install"
+    system "make", "install"
 
     if build.with? "headers"
       (include/"wireshark").install Dir["*.h"]
@@ -103,7 +118,7 @@ class Wireshark < Formula
   end
 
   test do
-    system "#{bin}/randpkt", "-b", "100", "-c", "2", "capture.pcap"
+    system bin/"randpkt", "-b", "100", "-c", "2", "capture.pcap"
     output = shell_output("#{bin}/capinfos -Tmc capture.pcap")
     assert_equal "File name,Number of packets\ncapture.pcap,2\n", output
   end

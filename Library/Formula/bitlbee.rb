@@ -1,27 +1,28 @@
-require 'formula'
-
 class Bitlbee < Formula
-  homepage 'http://www.bitlbee.org/'
-  url 'http://get.bitlbee.org/src/bitlbee-3.4.1.tar.gz'
-  sha1 'b77311b538ec1c584694784f119b99fb6b3f4859'
+  desc "IRC to other chat networks gateway"
+  homepage "http://www.bitlbee.org/"
+  url "http://get.bitlbee.org/src/bitlbee-3.4.1.tar.gz"
+  sha256 "b77311b538ec1c584694784f119b99fb6b3f4859"
+
+  head "https://github.com/bitlbee/bitlbee.git"
 
   bottle do
-    sha1 "4a639d88aa819d23d6020a36602097474f66357d" => :mavericks
-    sha1 "5312823fead39bba80b712bcedca4f9a7fc9211d" => :mountain_lion
-    sha1 "c21d19af516d959eb2a0b4b5ff534a66678d419d" => :lion
+    sha256 "69514cb51c5d562a10b10ea950bc51f066a12ae0b68fa74d8b77c61b368fc4c9" => :yosemite
+    sha256 "85d411185c1f7e5095777d567e5d63a6ba3566fc0ce51635cb18bc999147f689" => :mavericks
+    sha256 "85f062d5044055a73f4000c9db27c07094f4aedf4299c96fa7fa0b96e1fb7427" => :mountain_lion
   end
 
-  option 'with-pidgin', "Use finch/libpurple for all communication with instant messaging networks"
-  option 'with-libotr', "Build with otr (off the record) support"
+  option "with-pidgin", "Use finch/libpurple for all communication with instant messaging networks"
+  option "with-libotr", "Build with otr (off the record) support"
 
   deprecated_option "with-finch" => "with-pidgin"
 
-  depends_on 'pkg-config' => :build
-  depends_on 'glib'
-  depends_on 'gnutls'
-  depends_on 'libgcrypt'
-  depends_on 'pidgin' => :optional
-  depends_on 'libotr' => :optional
+  depends_on "pkg-config" => :build
+  depends_on "glib"
+  depends_on "gnutls"
+  depends_on "libgcrypt"
+  depends_on "pidgin" => :optional
+  depends_on "libotr" => :optional
 
   def install
     args = ["--prefix=#{prefix}",
@@ -38,11 +39,11 @@ class Bitlbee < Formula
 
     # This build depends on make running first.
     system "make"
-    system "make install"
+    system "make", "install"
     # Install the dev headers too
-    system "make install-dev"
+    system "make", "install-dev"
     # This build has an extra step.
-    system "make install-etc"
+    system "make", "install-etc"
 
     (var+"bitlbee/run").mkpath
     (var+"bitlbee/lib").mkpath
@@ -87,5 +88,9 @@ class Bitlbee < Formula
     </dict>
     </plist>
     EOS
+  end
+
+  test do
+    shell_output("#{sbin}/bitlbee -V", 1)
   end
 end

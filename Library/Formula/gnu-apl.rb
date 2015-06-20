@@ -1,6 +1,7 @@
 require "formula"
 
 class GnuApl < Formula
+  desc "GNU implementation of the programming language APL"
   homepage "http://www.gnu.org/software/apl/"
   url "http://ftpmirror.gnu.org/apl/apl-1.4.tar.gz"
   mirror "http://ftp.gnu.org/gnu/apl/apl-1.4.tar.gz"
@@ -23,7 +24,10 @@ class GnuApl < Formula
   end
 
   test do
-    ENV["TERM"] = "dumb"
-    system "#{bin}/apl", "--version"
+    (testpath/"hello.apl").write <<-EOS.undent
+      'Hello world'
+      )OFF
+    EOS
+    assert_match /Hello world/, shell_output("#{bin}/apl -s -f hello.apl")
   end
 end

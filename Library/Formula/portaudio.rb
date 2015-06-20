@@ -1,6 +1,7 @@
 require "formula"
 
 class Portaudio < Formula
+  desc "Cross-platform library for audio I/O"
   homepage "http://www.portaudio.com"
   url "http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz"
   sha1 "526a7955de59016a06680ac24209ecb6ce05527d"
@@ -18,6 +19,7 @@ class Portaudio < Formula
   option :universal
 
   def install
+    ENV.universal_binary if build.universal?
     system "./configure", "--prefix=#{prefix}",
                           "--disable-debug",
                           "--disable-dependency-tracking",

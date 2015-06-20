@@ -18,7 +18,7 @@ module Homebrew
       if ARGV.include? '--compact'
         puts f.options.as_flags.sort * " "
       else
-        puts f.name if formulae.length > 1
+        puts f.full_name if formulae.length > 1
         dump_options_for_formula f
         puts
       end
@@ -29,7 +29,7 @@ module Homebrew
     f.options.sort_by(&:flag).each do |opt|
       puts "#{opt.flag}\n\t#{opt.description}"
     end
-    puts "--devel\n\tinstall development version #{f.devel.version}" if f.devel
-    puts "--HEAD\n\tinstall HEAD version" if f.head
+    puts "--devel\n\tInstall development version #{f.devel.version}" if f.devel
+    puts "--HEAD\n\tInstall HEAD version" if f.head
   end
 end

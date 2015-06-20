@@ -1,16 +1,15 @@
-require "formula"
-
 class Libassuan < Formula
+  desc "Assuan IPC Library"
   homepage "https://www.gnupg.org/related_software/libassuan/index.en.html"
-  url "ftp://ftp.gnupg.org/gcrypt/libassuan/libassuan-2.1.3.tar.bz2"
-  mirror "ftp://mirror.tje.me.uk/pub/mirrors/ftp.gnupg.org/libassuan/libassuan-2.1.3.tar.bz2"
-  sha1 "56ac91973c2818a91d4f16ed48265a2b5daf45d3"
+  url "ftp://ftp.gnupg.org/gcrypt/libassuan/libassuan-2.2.1.tar.bz2"
+  mirror "https://www.mirrorservice.org/sites/ftp.gnupg.org/gcrypt/libassuan/libassuan-2.2.1.tar.bz2"
+  sha256 "949285bb79345362cb72a40c798defefc007031c60f2f10251720bf60a9de2de"
 
   bottle do
     cellar :any
-    sha1 "8c89e123cca5d492535e9ba9ec3ca34141d54823" => :yosemite
-    sha1 "b1e6d766da6c4cd4b77ec6d41e3a3ec7d657bd88" => :mavericks
-    sha1 "9c395e49e64d3ce487ef36f66dda3c4d6f1f3214" => :mountain_lion
+    sha256 "082430e5086ace20ca5086e2fefc21135ad88c02043443ea20c0ac8585bc4687" => :yosemite
+    sha256 "48898147dc1c848bfa388c73691a3f0695fe01fc0a6371b7650d5d59a5152080" => :mavericks
+    sha256 "d27880d342bcfb671a732c94259457df132af396285b5f0728c5a7ac93c79a7e" => :mountain_lion
   end
 
   depends_on "libgpg-error"

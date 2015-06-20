@@ -1,14 +1,13 @@
-require "formula"
-
 class Emscripten < Formula
-  homepage "http://emscripten.org"
-  url "https://github.com/kripken/emscripten/archive/1.26.0.tar.gz"
-  sha1 "6a0ca118d7ee75743e2bbe287446aaa6526d8016"
+  desc "LLVM bytecode to JavaScript compiler"
+  homepage "https://kripken.github.io/emscripten-site/"
+  url "https://github.com/kripken/emscripten/archive/1.33.0.tar.gz"
+  sha256 "ff88d80d61c94f289c5020d714dfa872c018ea9ba0e8577e0d5708335375f5f4"
 
   bottle do
-    sha1 "8441e594986a8e78b586654673f9314f2fecb41e" => :yosemite
-    sha1 "412e1f67594b9aa482fefb8642c42678ee96b30b" => :mavericks
-    sha1 "87d6bb592ed7e118483e3195767acd2caf50ce2d" => :mountain_lion
+    sha256 "a15045f4e083d785cfe276d322469796bb43e94e6ad7388a57bd907f83526551" => :yosemite
+    sha256 "8f205ed1aa87d0f2dbe99dfab669e64eb3a384791503709596d0ef92b0f45196" => :mavericks
+    sha256 "d4014e557b16ccd7df9ac57e9399c47373dd74e0b392b9333464fc290adea862" => :mountain_lion
   end
 
   head do
@@ -25,15 +24,17 @@ class Emscripten < Formula
 
   stable do
     resource "fastcomp" do
-      url "https://github.com/kripken/emscripten-fastcomp/archive/1.26.0.tar.gz"
-      sha1 "dc15fc8ace2cd60540244610e3a8f30d270c6cf7"
+      url "https://github.com/kripken/emscripten-fastcomp/archive/1.33.0.tar.gz"
+      sha256 "6adddb55afdd05fccedd9c82455701afcdaf5a7803ccc685a5e246df9a9890cb"
     end
 
     resource "fastcomp-clang" do
-      url "https://github.com/kripken/emscripten-fastcomp-clang/archive/1.26.0.tar.gz"
-      sha1 "4d622e70777ad074f6b1b6171806963e9feb988a"
+      url "https://github.com/kripken/emscripten-fastcomp-clang/archive/1.33.0.tar.gz"
+      sha256 "f935cdd46a5189147e4a2028a73fe7a2006d7dd47f86f2783c874021c1a02cac"
     end
   end
+
+  needs :cxx11
 
   depends_on :python if MacOS.version <= :snow_leopard
   depends_on "node"
@@ -41,6 +42,7 @@ class Emscripten < Formula
   depends_on "yuicompressor"
 
   def install
+    ENV.cxx11
     # OSX doesn't provide a "python2" binary so use "python" instead.
     python2_shebangs = `grep --recursive --files-with-matches ^#!/usr/bin/.*python2$ #{buildpath}`
     python2_shebang_files = python2_shebangs.lines.sort.uniq
@@ -65,10 +67,6 @@ class Emscripten < Formula
     ]
 
     cd "fastcomp" do
-      # Fix for parsing Mac OS X version numbers >= 10.10
-      # https://groups.google.com/forum/#!msg/emscripten-discuss/8gb88R5eyqs/p9_82Wi2pSAJ
-      inreplace "Makefile.rules", '10.([0-9])', '10.([0-9]+)'
-      inreplace "Makefile.rules", '(10.[0-9])', '(10.[0-9]+)'
       system "./configure", *args
       system "make"
       system "make", "install"

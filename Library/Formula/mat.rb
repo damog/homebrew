@@ -1,22 +1,18 @@
 require "formula"
 
+# FIXME this can be removed on the next release
 # OSX has case-insensitive file names, and the Mat archive contains a "MAT"
 # directory *and* a "mat" file. `tar xf` will fail on it, so we rename "mat"
 # into "mat-cli" here.
 class MatDownloadStrategy < CurlDownloadStrategy
   def stage
-    if tarball_path.compression_type == :xz
-      with_system_path do
-        safe_system "#{xzpath} -dc \"#{tarball_path}\" | tar xf - -s ',/mat$,/mat-cli,'"
-      end
-      chdir
-    else
-      super
-    end
+    with_system_path { safe_system "#{xzpath} -dc \"#{cached_location}\" | tar xf - -s ',/mat$,/mat-cli,'" }
+    chdir
   end
 end
 
 class Mat < Formula
+  desc "Metadata anonymization toolkit"
   homepage "https://mat.boum.org/"
   url "https://mat.boum.org/files/mat-0.5.2.tar.xz", :using => MatDownloadStrategy
   sha1 "932ac13863c994ca8874e3271f817efd879e28c3"

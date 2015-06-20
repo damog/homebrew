@@ -1,32 +1,29 @@
-require 'formula'
-
 class Redis < Formula
-  homepage 'http://redis.io/'
-  url "http://download.redis.io/releases/redis-2.8.17.tar.gz"
-  sha1 "913479f9d2a283bfaadd1444e17e7bab560e5d1e"
+  desc "Persistent key-value database, with built-in net interface"
+  homepage "http://redis.io/"
+  url "http://download.redis.io/releases/redis-3.0.2.tar.gz"
+  sha256 "93e422c0d584623601f89b956045be158889ebe594478a2c24e1bf218495633f"
 
   bottle do
-    sha1 "749cb76075887dae929b91b4a14fd376e4c2c1c5" => :mavericks
-    sha1 "601257c4bc1b39bfb450e6dc6f113fa9a73fb8f8" => :mountain_lion
-    sha1 "3716fd757f9911610f9d24cb51ecd9a52d71228c" => :lion
+    cellar :any
+    sha256 "4a004f8f829c0c79634db75a8889e305990110934afba8bb27b48e0aaaecf53b" => :yosemite
+    sha256 "77958c3e65e2579181846464de2b777fc8d6ffdf524988866a4c78fbc376f76b" => :mavericks
+    sha256 "54bda6925b7258c6dbcd8134fbb64a3feae09d1c0de1fedae7925a524ee1befe" => :mountain_lion
   end
 
-  head 'https://github.com/antirez/redis.git', :branch => 'unstable'
+  head "https://github.com/antirez/redis.git", :branch => "unstable"
 
   fails_with :llvm do
     build 2334
-    cause 'Fails with "reference out of range from _linenoise"'
+    cause "Fails with \"reference out of range from _linenoise\""
   end
 
   def install
     # Architecture isn't detected correctly on 32bit Snow Leopard without help
     ENV["OBJARCH"] = "-arch #{MacOS.preferred_arch}"
 
-    # Head and stable have different code layouts
-    src = (buildpath/'src/Makefile').exist? ? buildpath/'src' : buildpath
-    system "make", "-C", src, "CC=#{ENV.cc}"
+    system "make", "install", "PREFIX=#{prefix}", "CC=#{ENV.cc}"
 
-    %w[benchmark cli server check-dump check-aof sentinel].each { |p| bin.install src/"redis-#{p}" }
     %w[run db/redis log].each { |p| (var+p).mkpath }
 
     # Fix up default conf file to match our paths
@@ -36,8 +33,8 @@ class Redis < Formula
       s.gsub! "\# bind 127.0.0.1", "bind 127.0.0.1"
     end
 
-    etc.install 'redis.conf'
-    etc.install 'sentinel.conf' => 'redis-sentinel.conf'
+    etc.install "redis.conf"
+    etc.install "sentinel.conf" => "redis-sentinel.conf"
   end
 
   plist_options :manual => "redis-server #{HOMEBREW_PREFIX}/etc/redis.conf"

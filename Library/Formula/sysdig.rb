@@ -1,31 +1,36 @@
-require "formula"
-
 class Sysdig < Formula
+  desc "System-level exploration and troubleshooting tool"
   homepage "http://www.sysdig.org/"
-  url "https://github.com/draios/sysdig/archive/0.1.91.tar.gz"
-  sha1 "6bb8bbcc74b144678e18446e71a519e2d2dfd28a"
-
-  head "https://github.com/draios/sysdig.git", :branch => "master"
+  url "https://github.com/draios/sysdig/archive/0.1.101.tar.gz"
+  mirror "https://mirrors.kernel.org/debian/pool/main/s/sysdig/sysdig_0.1.101.orig.tar.gz"
+  sha256 "6995e39be565514901b5cb587689ee2efbf8359293e4e597362382cccf0e9db6"
 
   bottle do
-    sha1 "254b92f945f9a7ad381ea5406ad35319c66113c2" => :yosemite
-    sha1 "230d9573e0a511573a5768eaaa8802c1ddf4390f" => :mavericks
-    sha1 "ef0dbf574dd5f68ed29639e8f923ab1eed321329" => :mountain_lion
+    sha256 "469d034cfc2aa2788d3c235f9201b48e9633e3832aca6efdd83c05a29246f164" => :yosemite
+    sha256 "1019e1c5a1b4b13085089b61ecb6c61598573b8af88b8b430e81ece527e0e17c" => :mavericks
+    sha256 "bb8f97dc545bfa14a331e65222d072af4bbc3213e3da50a822e02770b0850e5c" => :mountain_lion
   end
 
   depends_on "cmake" => :build
+  depends_on "luajit"
 
   # More info on https://gist.github.com/juniorz/9986999
   resource "sample_file" do
     url "https://gist.githubusercontent.com/juniorz/9986999/raw/a3556d7e93fa890a157a33f4233efaf8f5e01a6f/sample.scap"
-    sha1 "0aa3c30b954f9fb0d7320d900d3a103ade6b1cec"
+    sha256 "efe287e651a3deea5e87418d39e0fe1e9dc55c6886af4e952468cd64182ee7ef"
   end
 
   def install
     ENV.libcxx if MacOS.version < :mavericks
 
     mkdir "build" do
-      system "cmake", "..", "-DSYSDIG_VERSION=#{version}", *std_cmake_args
+      args = %W[
+        -DSYSDIG_VERSION=#{version}
+        -DUSE_BUNDLED_LUAJIT=OFF
+        -DUSE_BUNDLED_ZLIB=OFF
+      ] + std_cmake_args
+
+      system "cmake", "..", *args
       system "make", "install"
     end
   end
@@ -41,7 +46,7 @@ class Sysdig < Formula
     # uses a custom output format because evt.time (in default format) is not UTC
     expected_output = "1 open fd=5(<f>/tmp/sysdig/sample.scap) name=sample.scap(/tmp/sysdig/sample.scap) flags=262(O_TRUNC|O_CREAT|O_WRONLY) mode=0"
 
-    assert_equal expected_output, `#{bin}/sysdig -r #{share}/demos/sample.scap -p "%evt.num %evt.type %evt.args" evt.type=open fd.name contains /tmp/sysdig/sample.scap`.strip
+    assert_equal expected_output, `#{bin}/sysdig -r #{share}/demos/sample.scap -p "%evt.num %evt.type %evt.args" "evt.type=open and evt.arg.name contains /tmp/sysdig/sample.scap"`.strip
     assert_equal 0, $?.exitstatus
   end
 end

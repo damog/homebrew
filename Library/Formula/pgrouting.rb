@@ -1,9 +1,17 @@
 require 'formula'
 
 class Pgrouting < Formula
+  desc "Provides geospatial routing for PostGIS/PostgreSQL database"
   homepage 'http://www.pgrouting.org'
   url "https://github.com/pgRouting/pgrouting/archive/v2.0.0.tar.gz"
   sha1 "cd2f60dc49df7bc8c789c8e73ecb9759194fab96"
+
+  def pour_bottle?
+    # Postgres extensions must live in the Postgres prefix, which precludes
+    # bottling: https://github.com/Homebrew/homebrew/issues/10247
+    # Overcoming this will likely require changes in Postgres itself.
+    false
+  end
 
   # work around function name conflict from Postgres
   # https://github.com/pgRouting/pgrouting/issues/274

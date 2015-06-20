@@ -1,24 +1,29 @@
 require "formula"
 
 class Vala < Formula
-  homepage "http://live.gnome.org/Vala"
-  head "git://git.gnome.org/vala"
-  url "http://ftp.acc.umu.se/pub/gnome/sources/vala/0.26/vala-0.26.0.tar.xz"
-  sha1 "ca8f84c7c271d6f47cad6526c176c5757655f63f"
+  desc "Compiler for the GObject type system"
+  homepage "https://live.gnome.org/Vala"
+  url "https://download.gnome.org/sources/vala/0.28/vala-0.28.0.tar.xz"
+  sha256 "0d9e3bd3f82145664875f7c29b2f544ba92d2814f75412948f774c0727fc977f"
 
   bottle do
-    revision 1
-    sha1 "ef2b97e0a0e213024dddc03070397df0feb238e0" => :yosemite
-    sha1 "b513f77a68e16829be5e36e2721262734e4004ac" => :mavericks
-    sha1 "f3ad6dda21d9d219f79c2aa435375947a034e405" => :mountain_lion
+    sha256 "637fba462ccb76d523bf960b790b70c906e8e90b5ef14ddb10fb2b3a49bef5b9" => :yosemite
+    sha256 "57ece7782e2d1c997de1849923e9c64f7c4eaead80251bcddd37bed836c5b18b" => :mavericks
+    sha256 "3fe949f7ad4a1121f2ea41cc0e45f37bd127d967354c43c94d9b3178a1594997" => :mountain_lion
   end
 
-  depends_on "pkg-config" => :build
+  devel do
+    url "https://download.gnome.org/sources/vala/0.29/vala-0.29.1.tar.xz"
+    sha256 "776b95c2cf29e20177bdfebdc05e0b665968a42313d8fd1961e5d5073a2600e9"
+  end
+
+  depends_on "pkg-config" => :run
   depends_on "gettext"
   depends_on "glib"
 
   def install
     system "./configure", "--disable-dependency-tracking",
+                          "--disable-silent-rules",
                           "--prefix=#{prefix}"
     system "make" # Fails to compile as a single step
     system "make", "install"

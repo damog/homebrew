@@ -1,6 +1,7 @@
 require 'formula'
 
 class Libnids < Formula
+  desc "Implements E-component of network intrusion detection system"
   homepage 'http://libnids.sourceforge.net/'
   url 'https://downloads.sourceforge.net/project/libnids/libnids/1.24/libnids-1.24.tar.gz'
   sha1 '9a421df05cefdc4f5f7db95efc001b3c2b5249ce'
@@ -13,15 +14,15 @@ class Libnids < Formula
     sha1 "23f8aaac028f2fd18323cebd0f5e06c74e708893" => :mountain_lion
   end
 
-  option "disable-libnet", "Don't include code requiring libnet"
-  option "disable-libglib", "Don't use glib2 for multiprocessing support"
+  deprecated_option "disable-libnet" => "without-libnet"
+  deprecated_option "disable-libglib" => "without-glib"
 
-  depends_on 'pkg-config' => :build
-  depends_on :autoconf
-  depends_on :automake
-  depends_on :libtool
-  depends_on 'libnet' unless build.include? "disable-libnet"
-  depends_on 'glib' unless build.include? "disable-libglib"
+  depends_on "pkg-config" => :build
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "libtool" => :build
+  depends_on "libnet" => :recommended
+  depends_on "glib" => :recommended
 
   # Patch fixes -soname and .so shared library issues. Unreported.
   patch :DATA
@@ -30,8 +31,8 @@ class Libnids < Formula
     # autoreconf the old 2005 era code for sanity.
     system 'autoreconf', '-ivf'
     args = ["--prefix=#{prefix}", "--mandir=#{man}", "--enable-shared"]
-    args << "--disable-libnet" if build.include? "disable-libnet"
-    args << "--disable-libglib" if build.include? "disable-libglib"
+    args << "--disable-libnet" if build.without? "libnet"
+    args << "--disable-libglib" if build.without? "glib"
 
     system "./configure", *args
     system "make install"

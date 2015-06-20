@@ -63,7 +63,7 @@ class Checks
   end
 
   # Git will always be on PATH because of the wrapper script in
-  # Library/Contributions/cmd, so we check if there is a *real*
+  # Library/ENV/scm, so we check if there is a *real*
   # git here to avoid multiple warnings.
   def git?
     return @git if instance_variable_defined?(:@git)
@@ -86,7 +86,7 @@ def check_path_for_trailing_slashes
 end
 
 # Installing MacGPG2 interferes with Homebrew in a big way
-# http://sourceforge.net/projects/macgpg2/files/
+# https://github.com/GPGTools/MacGPG2
 def check_for_macgpg2
   return if File.exist? '/usr/local/MacGPG2/share/gnupg/VERSION'
 
@@ -124,6 +124,7 @@ def check_for_stray_dylibs
     "libmacfuse_i64.2.dylib", # OSXFuse MacFuse compatibility layer
     "libosxfuse_i32.2.dylib", # OSXFuse
     "libosxfuse_i64.2.dylib", # OSXFuse
+    "libTrAPI.dylib", # TrAPI / Endpoint Security VPN
   ]
 
   __check_stray_files "/usr/local/lib", "*.dylib", white_list, <<-EOS.undent
@@ -232,6 +233,15 @@ def check_for_broken_symlinks
   unless broken_symlinks.empty? then <<-EOS.undent
     Broken symlinks were found. Remove them with `brew prune`:
       #{broken_symlinks * "\n      "}
+    EOS
+  end
+end
+
+def check_for_unsupported_osx
+  if MacOS.version >= "10.11" then <<-EOS.undent
+    You are using OS X #{MacOS.version}.
+    We do not provide support for this pre-release version.
+    You may encounter build failures or other breakage.
     EOS
   end
 end
@@ -418,7 +428,17 @@ def check_access_usr_local
   end
 end
 
-%w{include etc lib lib/pkgconfig share}.each do |d|
+def check_tmpdir_sticky_bit
+  world_writable = HOMEBREW_TEMP.stat.mode & 0777 == 0777
+  if world_writable && !HOMEBREW_TEMP.sticky? then <<-EOS.undent
+    #{HOMEBREW_TEMP} is world-writable but does not have the sticky bit set.
+    Please run "Repair Disk Permissions" in Disk Utility.
+  EOS
+  end
+end
+
+
+(Keg::TOP_LEVEL_DIRECTORIES + ["lib/pkgconfig"]).each do |d|
   define_method("check_access_#{d.sub("/", "_")}") do
     dir = HOMEBREW_PREFIX.join(d)
     if dir.exist? && !dir.writable_real? then <<-EOS.undent
@@ -434,16 +454,55 @@ end
   end
 end
 
+def check_access_site_packages
+  if Language::Python.homebrew_site_packages.exist? && !Language::Python.homebrew_site_packages.writable_real?
+    <<-EOS.undent
+      #{Language::Python.homebrew_site_packages} isn't writable.
+      This can happen if you "sudo pip install" software that isn't managed
+      by Homebrew. If you install a formula with Python modules, the install
+      will fail during the link step.
+
+      You should probably `chown` #{Language::Python.homebrew_site_packages}
+    EOS
+  end
+end
+
 def check_access_logs
   if HOMEBREW_LOGS.exist? and not HOMEBREW_LOGS.writable_real?
     <<-EOS.undent
       #{HOMEBREW_LOGS} isn't writable.
-      This can happen if you "sudo make install" software that isn't managed
-      by Homebrew.
-
       Homebrew writes debugging logs to this location.
-
       You should probably `chown` #{HOMEBREW_LOGS}
+    EOS
+  end
+end
+
+def check_access_cache
+  if HOMEBREW_CACHE.exist? && !HOMEBREW_CACHE.writable_real?
+    <<-EOS.undent
+      #{HOMEBREW_CACHE} isn't writable.
+      This can happen if you run `brew install` or `brew fetch` as another user.
+      Homebrew caches downloaded files to this location.
+      You should probably `chown` #{HOMEBREW_CACHE}
+    EOS
+  end
+end
+
+def check_access_cellar
+  if HOMEBREW_CELLAR.exist? && !HOMEBREW_CELLAR.writable_real?
+    <<-EOS.undent
+      #{HOMEBREW_CELLAR} isn't writable.
+      You should `chown` #{HOMEBREW_CELLAR}
+    EOS
+  end
+end
+
+def check_access_prefix_opt
+  opt = HOMEBREW_PREFIX.join("opt")
+  if opt.exist? && !opt.writable_real?
+    <<-EOS.undent
+      #{opt} isn't writable.
+      You should `chown` #{opt}
     EOS
   end
 end
@@ -530,7 +589,7 @@ def check_user_path_1
 
             Consider setting your PATH so that #{HOMEBREW_PREFIX}/bin
             occurs before /usr/bin. Here is a one-liner:
-                echo export PATH='#{HOMEBREW_PREFIX}/bin:$PATH' >> ~/.bash_profile
+                echo 'export PATH="#{HOMEBREW_PREFIX}/bin:$PATH"' >> #{shell_profile}
           EOS
         end
       end
@@ -548,7 +607,7 @@ def check_user_path_2
     <<-EOS.undent
       Homebrew's bin was not found in your PATH.
       Consider setting the PATH for example like so
-          echo export PATH='#{HOMEBREW_PREFIX}/bin:$PATH' >> ~/.bash_profile
+          echo 'export PATH="#{HOMEBREW_PREFIX}/bin:$PATH"' >> #{shell_profile}
     EOS
   end
 end
@@ -562,7 +621,7 @@ def check_user_path_3
         Homebrew's sbin was not found in your PATH but you have installed
         formulae that put executables in #{HOMEBREW_PREFIX}/sbin.
         Consider setting the PATH for example like so
-            echo export PATH='#{HOMEBREW_PREFIX}/sbin:$PATH' >> ~/.bash_profile
+            echo 'export PATH="#{HOMEBREW_PREFIX}/sbin:$PATH"' >> #{shell_profile}
       EOS
     end
   end
@@ -863,38 +922,25 @@ def check_for_autoconf
 end
 
 def __check_linked_brew f
-  links_found = []
-
-  prefix = f.prefix
-
-  prefix.find do |src|
-    next if src == prefix
-    dst = HOMEBREW_PREFIX + src.relative_path_from(prefix)
-
-    next if !dst.symlink? || !dst.exist? || src != dst.resolved_path
-
-    if src.directory?
-      Find.prune
-    else
-      links_found << dst
+  f.rack.subdirs.each do |prefix|
+    prefix.find do |src|
+      next if src == prefix
+      dst = HOMEBREW_PREFIX + src.relative_path_from(prefix)
+      return true if dst.symlink? && src == dst.resolved_path
     end
   end
 
-  return links_found
+  false
 end
 
 def check_for_linked_keg_only_brews
   return unless HOMEBREW_CELLAR.exist?
 
-  warnings = Hash.new
+  linked = Formula.installed.select { |f|
+    f.keg_only? && __check_linked_brew(f)
+  }
 
-  Formula.each do |f|
-    next unless f.keg_only? and f.installed?
-    links = __check_linked_brew f
-    warnings[f.name] = links unless links.empty?
-  end
-
-  unless warnings.empty?
+  unless linked.empty?
     s = <<-EOS.undent
     Some keg-only formula are linked into the Cellar.
     Linking a keg-only formula, such as gettext, into the cellar with
@@ -908,7 +954,7 @@ def check_for_linked_keg_only_brews
     You may wish to `brew unlink` these brews:
 
     EOS
-    warnings.each_key { |f| s << "    #{f}\n" }
+    linked.each { |f| s << "    #{f.full_name}\n" }
     s
   end
 end
@@ -942,7 +988,7 @@ def check_missing_deps
     Some installed formula are missing dependencies.
     You should `brew install` the missing dependencies:
 
-        brew install #{missing.sort_by(&:name) * " "}
+        brew install #{missing.sort_by(&:full_name) * " "}
 
     Run `brew missing` for more details.
     EOS
@@ -961,23 +1007,6 @@ def check_git_status
           cd #{HOMEBREW_LIBRARY} && git stash && git clean -d -f
       EOS
     end
-  end
-end
-
-def check_git_ssl_verify
-  if MacOS.version <= :leopard && !ENV['GIT_SSL_NO_VERIFY'] then <<-EOS.undent
-    The version of libcurl provided with Mac OS X #{MacOS.version} has outdated
-    SSL certificates.
-
-    This can cause problems when running Homebrew commands that use Git to
-    fetch over HTTPS, e.g. `brew update` or installing formulae that perform
-    Git checkouts.
-
-    You can force Git to ignore these errors:
-      export GIT_SSL_NO_VERIFY=1
-    or
-      git config --global http.sslVerify false
-    EOS
   end
 end
 
@@ -1043,7 +1072,7 @@ def check_for_non_prefixed_coreutils
 end
 
 def check_for_non_prefixed_findutils
-  default_names = Tab.for_name('findutils').include? 'default-names'
+  default_names = Tab.for_name('findutils').with? "default-names"
   if default_names then <<-EOS.undent
     Putting non-prefixed findutils in your path can cause python builds to fail.
     EOS
@@ -1054,8 +1083,8 @@ def check_for_pydistutils_cfg_in_home
   if File.exist? "#{ENV['HOME']}/.pydistutils.cfg" then <<-EOS.undent
     A .pydistutils.cfg file was found in $HOME, which may cause Python
     builds to fail. See:
-      http://bugs.python.org/issue6138
-      http://bugs.python.org/issue4655
+      https://bugs.python.org/issue6138
+      https://bugs.python.org/issue4655
     EOS
   end
 end
@@ -1093,8 +1122,8 @@ def check_for_unlinked_but_not_keg_only
       true
     elsif not (HOMEBREW_REPOSITORY/"Library/LinkedKegs"/rack.basename).directory?
       begin
-        Formulary.factory(rack.basename.to_s).keg_only?
-      rescue FormulaUnavailableError
+        Formulary.from_rack(rack).keg_only?
+      rescue FormulaUnavailableError, TapFormulaAmbiguityError
         false
       end
     else
@@ -1118,7 +1147,7 @@ end
     if `/usr/bin/xcrun clang 2>&1` =~ /license/ and not $?.success? then <<-EOS.undent
       You have not agreed to the Xcode license.
       Builds will fail! Agree to the license by opening Xcode.app or running:
-          xcodebuild -license
+          sudo xcodebuild -license
       EOS
     end
   end
@@ -1152,7 +1181,7 @@ end
   def check_for_pth_support
     homebrew_site_packages = Language::Python.homebrew_site_packages
     return unless homebrew_site_packages.directory?
-    return if Language::Python.reads_brewed_pth_files? "python"
+    return if Language::Python.reads_brewed_pth_files?("python") != false
     return unless Language::Python.in_sys_path?("python", homebrew_site_packages)
     user_site_packages = Language::Python.user_site_packages "python"
     <<-EOS.undent
@@ -1165,6 +1194,25 @@ end
         mkdir -p #{user_site_packages}
         echo 'import site; site.addsitedir("#{homebrew_site_packages}")' >> #{user_site_packages}/homebrew.pth
     EOS
+  end
+
+  def check_for_external_cmd_name_conflict
+    cmds = paths.map { |p| Dir["#{p}/brew-*"] }.flatten.uniq
+    cmds = cmds.select { |cmd| File.file?(cmd) && File.executable?(cmd) }
+    cmd_map = {}
+    cmds.each do |cmd|
+      cmd_name = File.basename(cmd, ".rb")
+      cmd_map[cmd_name] ||= []
+      cmd_map[cmd_name] << cmd
+    end
+    cmd_map.reject! { |cmd_name, cmd_paths| cmd_paths.size == 1 }
+    return if cmd_map.empty?
+    s = "You have external commands with conflicting names."
+    cmd_map.each do |cmd_name, cmd_paths|
+      s += "\n\nFound command `#{cmd_name}` in following places:\n"
+      s += cmd_paths.map { |f| "  #{f}" }.join("\n")
+    end
+    s
   end
 
   def all
@@ -1193,7 +1241,13 @@ module Homebrew
 
     first_warning = true
     methods.each do |method|
-      out = checks.send(method)
+      begin
+        out = checks.send(method)
+      rescue NoMethodError
+        Homebrew.failed = true
+        puts "No check available by the name: #{method}"
+        next
+      end
       unless out.nil? or out.empty?
         if first_warning
           puts <<-EOS.undent

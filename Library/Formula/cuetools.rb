@@ -1,6 +1,7 @@
 require "formula"
 
 class Cuetools < Formula
+  desc "Utilities for .cue and .toc files"
   homepage "https://github.com/svend/cuetools"
   url "https://github.com/svend/cuetools/archive/1.4.0.tar.gz"
   sha1 "2954eb1b33ed7c22ce5201f69ec5480560d650ad"
@@ -14,9 +15,9 @@ class Cuetools < Formula
     sha1 "c21d19db598c92f1829c6b92bdafa0215cd33a6f" => :lion
   end
 
-  depends_on :autoconf => :build
-  depends_on :automake => :build
-  depends_on :libtool => :build
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "libtool" => :build
 
   # see https://github.com/svend/cuetools/pull/18
   patch :DATA

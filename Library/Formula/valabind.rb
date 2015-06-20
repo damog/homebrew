@@ -1,20 +1,20 @@
-require "formula"
-
 class Valabind < Formula
+  desc "Vala bindings for radare, reverse engineering framework"
   homepage "http://radare.org/"
   head "https://github.com/radare/valabind.git"
-  url "https://github.com/radare/valabind/archive/0.8.0.tar.gz"
-  sha1 "f677110477e14c2e18ac61c56730ab0e51ac450d"
+  url "https://github.com/radare/valabind/archive/0.9.2.tar.gz"
+  sha256 "84cc2be21acb671e737dab50945b3717f1c68917faf23af443d3911774f5e578"
+
+  bottle do
+    cellar :any
+    sha256 "8aab7c9f2004e9e2378ed9320b3e3aca5b226a921fe097aa878077e58c1aac6c" => :yosemite
+    sha256 "45a23247c6eaf72c3a5e5fcfb5542d29eded403c3a1e72e80979a72625a454f8" => :mavericks
+    sha256 "74553dd4ddef8e5e2ceeda4a77d2c154de6388e224b23d94d04e37dbc6bf17f6" => :mountain_lion
+  end
 
   depends_on "pkg-config" => :build
   depends_on "swig" => :run
   depends_on "vala"
-
-  # Upstream patches to build against vala 0.26
-  patch do
-    url "https://gist.githubusercontent.com/jacknagel/7deb63f3ebfaaddbdf0d/raw/fb651566528cf997a770fef6546b8ac5d0838fd6/valabind.diff"
-    sha1 "dc9de8370913b91b2b50b0284188e209d7d71bcf"
-  end
 
   def install
     system "make"

@@ -7,16 +7,6 @@ module SharedEnvExtension
   CC_FLAG_VARS = %w{CFLAGS CXXFLAGS OBJCFLAGS OBJCXXFLAGS}
   FC_FLAG_VARS = %w{FCFLAGS FFLAGS}
 
-  COMPILER_SYMBOL_MAP = {
-    "gcc-4.0"  => :gcc_4_0,
-    "gcc-4.2"  => :gcc,
-    "llvm-gcc" => :llvm,
-    "clang"    => :clang,
-  }
-
-  COMPILERS = COMPILER_SYMBOL_MAP.values +
-    GNU_GCC_VERSIONS.map { |n| "gcc-4.#{n}" }
-
   SANITIZED_VARS = %w[
     CDPATH GREP_OPTIONS CLICOLOR_FORCE
     CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH OBJC_INCLUDE_PATH
@@ -24,7 +14,8 @@ module SharedEnvExtension
     CFLAGS CXXFLAGS OBJCFLAGS OBJCXXFLAGS LDFLAGS CPPFLAGS
     MACOSX_DEPLOYMENT_TARGET SDKROOT DEVELOPER_DIR
     CMAKE_PREFIX_PATH CMAKE_INCLUDE_PATH CMAKE_FRAMEWORK_PATH
-    GOBIN
+    GOBIN GOPATH GOROOT
+    LIBRARY_PATH
   ]
 
   def setup_build_environment(formula=nil)
@@ -139,7 +130,7 @@ module SharedEnvExtension
   end
 
   # Snow Leopard defines an NCURSES value the opposite of most distros
-  # See: http://bugs.python.org/issue6848
+  # See: https://bugs.python.org/issue6848
   # Currently only used by aalib in core
   def ncurses_define
     append 'CPPFLAGS', "-DNCURSES_OPAQUE=0"

@@ -1,6 +1,5 @@
-require "formula"
-
 class LSmash < Formula
+  desc "Tool for working with MP4 files"
   homepage "http://l-smash.github.io/l-smash/"
   url "https://github.com/l-smash/l-smash.git", :tag => "v1.13.2", :shallow => false
   head "https://github.com/l-smash/l-smash.git"
@@ -13,12 +12,7 @@ class LSmash < Formula
   end
 
   def install
-    args = ["--prefix=#{prefix}", "--enable-shared"]
-
-    # For getting version information correctly in the configure
-    buildpath.install_symlink cached_download/".git"
-
-    system "./configure", *args
+    system "./configure", "--prefix=#{prefix}", "--enable-shared"
     system "make", "install"
   end
 

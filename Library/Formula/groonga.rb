@@ -1,14 +1,13 @@
-require "formula"
-
 class Groonga < Formula
+  desc "Fulltext search engine and column store"
   homepage "http://groonga.org/"
-  url "http://packages.groonga.org/source/groonga/groonga-4.0.7.tar.gz"
-  sha1 "b00c56c6d7318fe1a87f6f55366182ace4014a2a"
+  url "http://packages.groonga.org/source/groonga/groonga-5.0.4.tar.gz"
+  sha256 "338b7a921e6f6dcf3e65d2147a55a9fe646544eeb97653194261111159b4fe10"
 
   bottle do
-    sha1 "2775b6f11f9e37b2c217232a8c1330d96399f247" => :yosemite
-    sha1 "666f42790d8c1971886af044f01d202158439597" => :mavericks
-    sha1 "e98db97c283412714a64066c0250c33832f4472f" => :mountain_lion
+    sha256 "73dd96e27fcc896f7625fb834f4869ed515c97a41213ceb06c35c379e45a2bfc" => :yosemite
+    sha256 "a79bacfd254ef168aa2f20d116bd6f3ed207cf17b7a7b9a9d8a15b0fa79e861f" => :mavericks
+    sha256 "5d7041fac2246ffda0a056e86a03a8e49eef6617f06dfda6ee1c1e709bb9c09c" => :mountain_lion
   end
 
   depends_on "pkg-config" => :build
@@ -28,7 +27,7 @@ class Groonga < Formula
       --prefix=#{prefix}
       --with-zlib
       --disable-zeromq
-      --with-mruby
+      --enable-mruby
       --without-libstemmer
     ]
 
@@ -38,6 +37,7 @@ class Groonga < Formula
 
     # ZeroMQ is an optional dependency that will be auto-detected unless we disable it
     system "./configure", *args
+    system "make"
     system "make install"
   end
 end

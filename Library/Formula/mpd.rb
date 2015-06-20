@@ -1,17 +1,19 @@
-require 'formula'
-
 class Mpd < Formula
+  desc "Music Player Daemon"
   homepage "http://www.musicpd.org/"
+  revision 1
 
   stable do
-    url "http://www.musicpd.org/download/mpd/0.19/mpd-0.19.3.tar.xz"
-    sha1 "2027ea7c379e045dec6cddfe0ccef341fe00c387"
+    url "http://www.musicpd.org/download/mpd/0.19/mpd-0.19.9.tar.xz"
+    sha256 "47851423053cd38cfad65be5985b41b7cd5bdbe8d0d13378e11748a28b19f26f"
   end
 
   bottle do
-    sha1 "39f129531b72e8f535ae88da874f129e0f3f9973" => :yosemite
-    sha1 "9ef65e0145114cbfdba88a192cfa815d091f1bae" => :mavericks
-    sha1 "6c0114af24734da833fab852033962890daeeabf" => :mountain_lion
+    cellar :any
+    revision 1
+    sha256 "17b549191c5093717380ec7401199b387dd1d89d1ac7f807f20c25d87ce16586" => :yosemite
+    sha256 "aba64fcb2dd7d5ad2f756d0f3a6c8edeb8e6c85883a25a66e635e92f73076d91" => :mavericks
+    sha256 "f84f912abb45f3f99c2c1233c4117667aaa6248e94115c7d3f5e9611028f8bae" => :mountain_lion
   end
 
   head do
@@ -25,9 +27,11 @@ class Mpd < Formula
   option "with-lame", "Build with lame support (for MP3 encoding when streaming)"
   option "with-two-lame", "Build with two-lame support (for MP2 encoding when streaming)"
   option "with-flac", "Build with flac support (for Flac encoding when streaming)"
-  option "with-vorbis", "Build with vorbis support (for Ogg encoding)"
+  option "with-libvorbis", "Build with vorbis support (for Ogg encoding)"
   option "with-yajl", "Build with yajl support (for playing from soundcloud)"
   option "with-opus", "Build with opus support (for Opus encoding and decoding)"
+
+  deprecated_option "with-vorbis" => "with-libvorbis"
 
   depends_on "pkg-config" => :build
   depends_on "boost" => :build
@@ -55,8 +59,8 @@ class Mpd < Formula
   depends_on "libzzip" => :optional     # Reading from within ZIPs
   depends_on "yajl" => :optional        # JSON library for SoundCloud
   depends_on "opus" => :optional        # Opus support
-
-  depends_on "libvorbis" if build.with? "vorbis" # Vorbis support
+  depends_on "libvorbis" => :optional
+  depends_on "libnfs" => :optional
 
   def install
     # mpd specifies -std=gnu++0x, but clang appears to try to build
@@ -70,6 +74,7 @@ class Mpd < Formula
       --disable-debug
       --disable-dependency-tracking
       --prefix=#{prefix}
+      --sysconfdir=#{etc}
       --enable-bzip2
       --enable-ffmpeg
       --enable-fluidsynth
@@ -84,12 +89,15 @@ class Mpd < Formula
     args << "--enable-lastfm" if build.with? "lastfm"
     args << "--disable-lame-encoder" if build.without? "lame"
     args << "--disable-soundcloud" if build.without? "yajl"
-    args << "--enable-vorbis-encoder" if build.with? "vorbis"
+    args << "--enable-vorbis-encoder" if build.with? "libvorbis"
+    args << "--enable-nfs" if build.with? "libnfs"
 
     system "./configure", *args
     system "make"
     ENV.j1 # Directories are created in parallel, so let's not do that
-    system "make install"
+    system "make", "install"
+
+    (etc+"mpd").install "doc/mpdconf.example" => "mpd.conf"
   end
 
   plist_options :manual => "mpd"
@@ -115,5 +123,19 @@ class Mpd < Formula
     </dict>
     </plist>
     EOS
+  end
+
+  test do
+    pid = fork do
+      exec "#{bin}/mpd --stdout --no-daemon --no-config"
+    end
+    sleep 2
+
+    begin
+      assert_match /OK MPD/, shell_output("curl localhost:6600")
+    ensure
+      Process.kill("SIGINT", pid)
+      Process.wait(pid)
+    end
   end
 end

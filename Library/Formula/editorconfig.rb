@@ -1,6 +1,7 @@
 require 'formula'
 
 class Editorconfig < Formula
+  desc "Maintain consistent coding style between multiple editors"
   homepage 'http://editorconfig.org'
   url 'https://downloads.sourceforge.net/project/editorconfig/EditorConfig-C-Core/0.12.0/source/editorconfig-core-c-0.12.0.tar.gz'
   sha1 'dfa96da823133fd925e7384f19d7f2acf44f50ba'
@@ -12,12 +13,16 @@ class Editorconfig < Formula
     sha1 "84b22980c00b6c779f6308561b06058f5e3d5b11" => :lion
   end
 
+  option :universal
+
+  head 'https://github.com/editorconfig/editorconfig-core-c.git'
+
   depends_on 'cmake' => :build
   depends_on 'pcre'
 
-  head 'https://github.com/editorconfig/editorconfig-core-c.git', :branch => 'master'
-
   def install
+    ENV.universal_binary if build.universal?
+
     system "cmake", ".", "-DCMAKE_INSTALL_PREFIX:PATH=#{prefix}"
     system "make install"
   end

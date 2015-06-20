@@ -1,23 +1,19 @@
 require 'formula'
 
-class Xcode5 < Requirement
-  fatal true
-  satisfy { MacOS::Xcode.version >= "5.0" }
-end
-
 class Xctool < Formula
+  desc "Drop-in replacement for xcodebuild with a few extra features"
   homepage 'https://github.com/facebook/xctool'
-  url 'https://github.com/facebook/xctool/archive/v0.2.1.tar.gz'
-  sha1 '49182de7136447f86cfe0c86035a9858befcbbdf'
+  url 'https://github.com/facebook/xctool/archive/v0.2.4.tar.gz'
+  sha256 '0eb7a0ed45feb413ee12fd10f2425975124c1ee3c5dd55e35fa1ff271cea841a'
   head 'https://github.com/facebook/xctool.git'
 
   bottle do
-    sha1 "fcf07aca0621e0b5e7a97e820e49c6a6e05b6901" => :mavericks
-    sha1 "62a3b9db0ae8a44580d61e6b2da4fb110d580ea7" => :mountain_lion
+    cellar :any
+    sha256 "4ec86b7dcd1cfe3b60064d037f58fe79a31e1747b277f04c1c8dc7880e573597" => :yosemite
+    sha256 "6d59a5ba2bac54067349a387ed427407e08896f2d74e05666c1342db3a27264c" => :mavericks
   end
 
-  depends_on :xcode
-  depends_on Xcode5
+  depends_on :xcode => "6.0"
 
   def install
     system "./scripts/build.sh", "XT_INSTALL_ROOT=#{libexec}"

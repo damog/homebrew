@@ -1,9 +1,10 @@
 require "formula"
 
 class Jbake < Formula
+  desc "Java based static site/blog generator"
   homepage "http://jbake.org"
-  url "http://jbake.org/files/jbake-2.3.1-bin.zip"
-  sha1 "b429a89a66c021a70394e0207d71a703de58d85b"
+  url "http://jbake.org/files/jbake-2.4.0-bin.zip"
+  sha1 "e53633c6cd6ba714a8876cadc02fe41e7790c5db"
 
   def install
     rm_f Dir["bin/*.bat"]

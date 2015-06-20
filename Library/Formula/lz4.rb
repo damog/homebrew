@@ -1,16 +1,15 @@
-require "formula"
-
 class Lz4 < Formula
-  homepage "http://code.google.com/p/lz4/"
-  url "https://dl.dropboxusercontent.com/u/59565338/LZ4/lz4-r116.tar.gz"
-  sha1 "ac57ea8d0604e70739869751dcb43714255b9a7d"
-  version "r116"
+  desc "Lossless compression algorithm"
+  homepage "http://www.lz4.info/"
+  url "https://github.com/Cyan4973/lz4/archive/r130.tar.gz"
+  sha256 "c48450d27524c2e5856997133e059e3cf9909241110a6e21ad278890ac425afc"
+  version "r130"
 
   bottle do
     cellar :any
-    sha1 "64ed763d71baa31fff5d20ea815ddad4e727ef35" => :mavericks
-    sha1 "abd873485e052034929edef016b274e52947655f" => :mountain_lion
-    sha1 "5130288a257b8df4da7538789a38ab53f3bd9a58" => :lion
+    sha256 "ddc009f6644dbfbe40f097164e4d32519dc425fbcbc4da2a730085c09e71cbb9" => :yosemite
+    sha256 "32aca554261845d66f1a5b8a30c24100a65e7eeed3cb9936234c23a1942ffb34" => :mavericks
+    sha256 "64b4d909025c00e2ae01d9dd1bedb56475d11ea30a3bae0c306e5aee4da0da09" => :mountain_lion
   end
 
   def install

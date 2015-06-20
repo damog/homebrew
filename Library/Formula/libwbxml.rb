@@ -1,6 +1,7 @@
 require 'formula'
 
 class Libwbxml < Formula
+  desc "Library and tools to parse and encode WBXML documents"
   homepage 'https://libwbxml.opensync.org/'
   url 'https://downloads.sourceforge.net/project/libwbxml/libwbxml/0.11.2/libwbxml-0.11.2.tar.bz2'
   sha1 '0b4f526709cac75c4b261666950bd935dda9f0d4'
@@ -13,17 +14,21 @@ class Libwbxml < Formula
     sha1 "3aced5392e10b5bad5e53e579a99b0247157cc42" => :mountain_lion
   end
 
-  option 'docs', 'Build the documentation with Doxygen and Graphviz'
+  option "with-docs", "Build the documentation with Doxygen and Graphviz"
+  deprecated_option "docs" => "with-docs"
 
   depends_on 'cmake' => :build
   depends_on 'wget' => :optional
-  depends_on 'doxygen' if build.include? 'docs'
-  depends_on 'graphviz' if build.include? 'docs'
+
+  if build.with? "docs"
+    depends_on "doxygen" => :build
+    depends_on "graphviz" => :build
+  end
 
   def install
     mkdir "build" do
       args = std_cmake_args + %w[..]
-      args << '-DBUILD_DOCUMENTATION=ON' if build.include? 'docs'
+      args << "-DBUILD_DOCUMENTATION=ON" if build.with? "docs"
       system "cmake", *args
       system "make install"
     end

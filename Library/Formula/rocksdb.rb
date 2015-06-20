@@ -1,15 +1,17 @@
 require "formula"
 
 class Rocksdb < Formula
+  desc "Persistent key-value store for fast storage environments"
   homepage "http://rocksdb.org"
-  url "https://github.com/facebook/rocksdb/archive/rocksdb-3.6.1.tar.gz"
-  sha1 "5913cfe18a16487d6b3957fe104354c0ec15b9c7"
+  url "https://github.com/facebook/rocksdb/archive/rocksdb-3.10.2.tar.gz"
+  sha256 "5ace408b12e5e5c836c9ba0b1bd57662784d15820cd02b203459b3ac2e01fde7"
 
   bottle do
     cellar :any
-    sha1 "49595928c9413224d17be626a8e5ae276fa1857b" => :yosemite
-    sha1 "5f97280309ca391216b67d8ac93703d4567a0895" => :mavericks
-    sha1 "3cf7ffd06fb57f5360d7332586ec96b04fc63c3b" => :mountain_lion
+    revision 1
+    sha256 "9f5e064a29837a8aef87a8ebe2d9b576f9881fa669e085f7518b8344c5bc39ab" => :yosemite
+    sha256 "7e2bf1f95f49c4d5f111737d171fd333e3a6d89a435d74f76163d1b1291a6138" => :mavericks
+    sha256 "ada906d1b4fa26f73ce3aa4b393c6c9d7ec76bf50663e2ff748d143f6c3518bc" => :mountain_lion
   end
 
   needs :cxx11
@@ -18,6 +20,7 @@ class Rocksdb < Formula
 
   def install
     ENV.cxx11
+    ENV["PORTABLE"] = "1" if build.bottle?
     system "make", "clean"
     system "make", "static_lib"
     system "make", "shared_lib"

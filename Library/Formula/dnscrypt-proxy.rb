@@ -1,19 +1,26 @@
-require "formula"
-
 class DnscryptProxy < Formula
+  desc "Secure communications between a client and a DNS resolver"
   homepage "http://dnscrypt.org"
-  url "http://download.dnscrypt.org/dnscrypt-proxy/dnscrypt-proxy-1.4.1.tar.gz"
-  sha256 "b53822841bd275d81ff9faa4784a42618b7acc3c76a86c75be40379c503d69de"
+  url "https://github.com/jedisct1/dnscrypt-proxy/releases/download/1.5.0/dnscrypt-proxy-1.5.0.tar.bz2"
+  mirror "http://download.dnscrypt.org/dnscrypt-proxy/dnscrypt-proxy-1.5.0.tar.bz2"
+  sha256 "dd1a09baff5685cf939c429ba0258f66a79d464bc5ac130d8d30e667fb8ee3b2"
 
-  head do
-    url "https://github.com/jedisct1/dnscrypt-proxy.git", :branch => "master"
-
-    depends_on :autoconf
-    depends_on :automake
-    depends_on :libtool
+  bottle do
+    sha256 "e7062b1b7be9232ae720c10a8408947979d067309f858876d69f840682f4c232" => :yosemite
+    sha256 "d68a2f9232aff5b1565221fbd188dd0a763cca36bde24edfc7bc41414c06fa93" => :mavericks
+    sha256 "13a888618cccd52d7fc902fd209d9c681cbf760f06306022f17bdf94e098cf3a" => :mountain_lion
   end
 
-  option "plugins", "Support plugins and install example plugins."
+  head do
+    url "https://github.com/jedisct1/dnscrypt-proxy.git"
+
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
+  end
+
+  option "with-plugins", "Support plugins and install example plugins."
+  deprecated_option "plugins" => "with-plugins"
 
   depends_on "libsodium"
 
@@ -21,7 +28,7 @@ class DnscryptProxy < Formula
     system "autoreconf", "-if" if build.head?
 
     args = ["--disable-dependency-tracking", "--prefix=#{prefix}"]
-    if build.include? "plugins"
+    if build.with? "plugins"
       args << "--enable-plugins"
       args << "--enable-relaxed-plugins-permissions"
       args << "--enable-plugins-root"
@@ -86,5 +93,9 @@ class DnscryptProxy < Formula
       </dict>
     </plist>
     EOS
+  end
+
+  test do
+    system "#{sbin}/dnscrypt-proxy", "--version"
   end
 end

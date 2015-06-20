@@ -1,6 +1,7 @@
 require "formula"
 
 class Opensc < Formula
+  desc "Tools and libraries for smart cards"
   homepage "https://github.com/OpenSC/OpenSC/wiki"
   url "https://downloads.sourceforge.net/project/opensc/OpenSC/opensc-0.14.0/opensc-0.14.0.tar.gz"
   sha1 "4a898e351b0a6d2a5d81576daa7ebed45baf9138"
@@ -15,9 +16,9 @@ class Opensc < Formula
   head do
     url "https://github.com/OpenSC/OpenSC.git"
 
-    depends_on :autoconf
-    depends_on :automake
-    depends_on :libtool
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
   end
 
   option "with-man-pages", "Build manual pages"

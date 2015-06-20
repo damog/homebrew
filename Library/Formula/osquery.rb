@@ -1,30 +1,29 @@
 require "formula"
 
 class Osquery < Formula
-  homepage "http://osquery.io"
+  desc "SQL powered operating system instrumentation and analytics"
+  homepage "https://osquery.io"
   # pull from git tag to get submodules
-  url "https://github.com/facebook/osquery.git", :tag => "1.0.3"
-  sha1 "529d9a9abc0eb282fd0e61884e2c9f0ee24eddd0"
+  url "https://github.com/facebook/osquery.git", :tag => "1.4.6", :revision => "b56e9efd47efeea487b90fd7c137b55b3254c6c8"
 
   bottle do
-    cellar :any
-    sha1 "2124957f09ba002ad3f4e63e2ef063bcc8065dd9" => :yosemite
-    sha1 "5220b65b3de9e766828295ba1cdb66d0a965085b" => :mavericks
+    sha256 "73ef1b702ac0711cb8ae97c56688c0396104d042d4d735d9120274edbb87072f" => :yosemite
+    sha256 "b065db81d07ad1bbc6f4f06438bd694cc5cf536364da0f518b39ba89bd715838" => :mavericks
   end
 
   # Build currently fails on Mountain Lion:
-  # https://github.com/facebook/osquery/issues/277
+  # https://github.com/facebook/osquery/issues/409
   # Will welcome PRs to fix this!
   depends_on :macos => :mavericks
 
   depends_on "cmake" => :build
-
-  depends_on "boost"
-  depends_on "gflags"
-  depends_on "glog"
+  depends_on "boost" => :build
+  depends_on "doxygen" => :build
+  depends_on "gflags" => :build
+  depends_on "rocksdb" => :build
+  depends_on "thrift" => :build
+  depends_on "yara" => :build
   depends_on "openssl"
-  depends_on "rocksdb"
-  depends_on "thrift"
 
   resource "markupsafe" do
     url "https://pypi.python.org/packages/source/M/MarkupSafe/MarkupSafe-0.23.tar.gz"
@@ -34,12 +33,6 @@ class Osquery < Formula
   resource "jinja2" do
     url "https://pypi.python.org/packages/source/J/Jinja2/Jinja2-2.7.3.tar.gz"
     sha1 "25ab3881f0c1adfcf79053b58de829c5ae65d3ac"
-  end
-
-  # Fix build on mountain lion (https://github.com/facebook/osquery/issues/277)
-  patch do
-    url "https://github.com/facebook/osquery/commit/cd7454.diff"
-    sha1 "0555bef180598a8846a3aa5d27db4d3a37b5ba2e"
   end
 
   def install
@@ -53,9 +46,8 @@ class Osquery < Formula
     end
 
     system "cmake", ".", *std_cmake_args
+    system "make"
     system "make", "install"
-
-    prefix.install "tools/com.facebook.osqueryd.plist"
   end
 
   plist_options :startup => true, :manual => "osqueryd"
@@ -63,9 +55,9 @@ class Osquery < Formula
   test do
     require 'open3'
     Open3.popen3("#{bin}/osqueryi") do |stdin, stdout, _|
-      stdin.write(".mode line\nSELECT major FROM osx_version;")
+      stdin.write(".mode line\nSELECT count(version) as lines FROM osquery_info;")
       stdin.close
-      assert_equal "major = 10\n", stdout.read
+      assert_equal "lines = 1\n", stdout.read
     end
   end
 end
